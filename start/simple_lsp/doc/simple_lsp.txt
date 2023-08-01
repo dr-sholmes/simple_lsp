@@ -1,0 +1,59 @@
+*simple_lsp.txt*   For Vim version 8.0 Last change: 2021 August 9
+======================================================================
+CONTENTS                                            *simple_lsp-contents*
+1. Usage .........................................  |simple_lspusage|
+2. Commands ......................................  |simple_lspcommands|
+3. License .......................................  |simple_lsplicense|
+4. Bugs ..........................................  |simple_lspbugs|
+6. Changelog .....................................  |simple_lspchangelog|
+7. Credits .......................................  |simple_lspcredits|
+
+======================================================================
+Section 1: Usage                                       *simple_lspusage*
+
+Simple interface to an LSP server.
+
+======================================================================
+Section 2: Commands                                *simple_lspcommands*
+
+This plugin defines the following commands:
+
+                                                    *:LSPStartServer*
+:LSPStartServer         Starts the LSP server, typically called in an autocmd.
+
+                                                    *:LSPRegisterBuffer*
+:LSPRegisterBuffer      Register a buffer with the LSP server, such that it is notified of file changes.
+
+                                                    *:LSPRequestDeclaration*
+:LSPRequestDeclaration  Request declarations of the entity under the cursor.
+
+                                                    *:LSPRequestReferences*
+:LSPRequestReferences   Request location of references to the entity under the cursor.
+
+                                                    *:LSPRequestHover*
+:LSPRequestHover        Request hover information for the cursor location.
+
+                                                    *:LSPRequestCompletion*
+:LSPRequestCompletion   Request completions for the cursor location (WIP).
+
+======================================================================
+Section 3: License                                    *simple_lsplicense*
+
+MIT - see LICENSE.txt
+
+======================================================================
+Section 4: Bugs                                          *simple_lspbugs*
+
+None currently known
+
+======================================================================
+Section 6: Changelog                                *simple_lspchangelog*
+
+0.0.1 - Initial commit
+
+======================================================================
+Section 7: Credits                                    *simple_lspcredits*
+
+Scott Holmes
+
+ vim:tw=80:ts=4:noet:ft=help:norl:
