@@ -52,7 +52,8 @@ endfunction
 
 " Response handlers
 function! s:TextDocumentDisplayDiagnostics(params)
-    cgetexpr map(a:params.diagnostics, {i,v -> s:UriToPath(a:params.uri) . ":" . string(v.range.start.line + 1).":".string(v.range.start.character + 1). ":" . v.message})
+    call map(a:params.diagnostics, {i,v -> s:UriToPath(a:params.uri) . ":" . string(v.range.start.line + 1).":".string(v.range.start.character + 1). ":" . v.message})
+    let b:diagnostics = a:params.diagnostics
 endfunction
 
 function! s:TextDocumentHandleLinks(params)
@@ -133,12 +134,12 @@ function! s:StartServerJob(command, interval)
     return 1
 endfunction
 
-function simple_lsp#StartServer(command, rootpath)
+function simple_lsp#StartServer(command, root_path)
     if exists('s:lsp_active')
         return
     endif
     if s:StartServerJob(a:command, 100)
-        return simple_lsp#Send(s:CreateLspRequest("initialize", {"rootUri": s:PathToUri(a:rootPath), "capabilities": {}, "rootPath": a:rootPath}))
+        return simple_lsp#Send(s:CreateLspRequest("initialize", {"rootUri": s:PathToUri(a:root_path), "capabilities": {}, "rootPath": a:root_path}))
     endif
 endfunction
 
@@ -222,4 +223,11 @@ endfunction
 
 function! simple_lsp#RequestCompletion()
     return simple_lsp#SendBufferRequest(s:CreateLspRequest("textDocument/completion", {"context": {"triggerKind": 1}, "textDocument": {"uri": s:PathToUri(expand('%:p'))}, "position": s:PosToLSPPos(getcurpos())}))
+endfunction
+
+function! simple_lsp#GetDiagnostics()
+    if exists('b:diagnostics')
+        return b:diagnostics
+    endif
+    return []
 endfunction

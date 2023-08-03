@@ -1,6 +1,6 @@
 " Start the LSP server process and connect vim
-function! LSPStartServer(command)
-    return simple_lsp#StartServer(a:command)
+function! LSPStartServer(command, root_path)
+    return simple_lsp#StartServer(a:command, a:root_path)
 endfunction
 
 " Register the current buffer with the LSP. Once registered vim will notify
@@ -28,4 +28,8 @@ endfunction
 " Request completions for the current cursor location (WIP)
 function! LSPRequestCompletion()
     return simple_lsp#RequestCompletion()
+endfunction
+
+function! LSPGetDiagnostics()
+    return simple_lsp#GetDiagnostics()
 endfunction
