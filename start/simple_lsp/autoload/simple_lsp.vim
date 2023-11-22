@@ -56,6 +56,19 @@ function! s:TextDocumentDisplayDiagnostics(params)
     let b:diagnostics = a:params.diagnostics
 endfunction
 
+function! s:TextDocumentHandleCompletions(params)
+    call s:LogMsg(string(a:params))
+    let l:items = a:params.items
+    let l:line = getline('.')
+    call sort(l:items, {lhs, rhs -> (lhs.score < rhs.score ? 1 : (lhs.score > rhs.score ? -1 : 0))})
+    call map(l:items, {i,v -> {
+    \ 'word':(v.textEdit.range.start.character == 0 ? "" : l:line[:v.textEdit.range.start.character - 1]) . v.textEdit.newText,
+    \ 'menu':v.label,
+    \ 'info':has_key(v, 'documentation') ? v.documentation.value : ""
+    \ }})
+    call complete(1, l:items)
+endfunction
+
 function! s:TextDocumentHandleLinks(params)
     cexpr map(a:params, {i,v -> s:UriToPath(v.uri) . ":" . string(v.range.start.line + 1).":".string(v.range.start.character + 1). ":link"})
 endfunction
@@ -70,6 +83,7 @@ let s:lsp_msg_handlers = {
     \"textDocument/declaration":function("s:TextDocumentHandleLinks"),
     \"textDocument/references":function("s:TextDocumentHandleLinks"),
     \"textDocument/hover":function("s:TextDocumentDisplayPopup"),
+    \"textDocument/completion":function("s:TextDocumentHandleCompletions"),
     \}
 
 function! s:HandleMessage(msg)
@@ -144,11 +158,12 @@ function simple_lsp#StartServer(command, root_path)
 endfunction
 
 " Change notification
-function! s:CheckForChanges()
-    if mode() != "n" || !exists('b:last_change_tick') 
+function! s:CheckForChanges(force)
+    if !exists('b:last_change_tick')
         return
     endif
-    if b:last_change_tick >= b:changedtick
+
+    if !a:force && (mode() != "n" || b:last_change_tick >= b:changedtick)
         return
     endif
 
@@ -158,7 +173,7 @@ function! s:CheckForChanges()
 endfunction
 
 function! s:LSPEventLoop(timer)
-    return s:CheckForChanges()
+    return s:CheckForChanges(0)
 endfunction
 
 " Buffer management
@@ -179,6 +194,7 @@ function! simple_lsp#RegisterBuffer()
 
     let b:lsp_tracked = 1
     let b:version = 0
+    let b:last_change_tick = 0
     try
         call s:LogMsg("Sending didOpen for [".bufnr()."]")
         call simple_lsp#Send(s:CreateLspNotification("textDocument/didOpen", {"textDocument": {"uri": s:PathToUri(expand('%:p')), "version": b:version, "languageId": "cpp", "text": join(getbufline('%', 1, '$'), "\n")}}))
@@ -221,8 +237,15 @@ function! simple_lsp#RequestHover()
     return simple_lsp#SendBufferRequest(s:CreateLspRequest("textDocument/hover", {"textDocument": {"uri": s:PathToUri(expand('%:p'))}, "position": s:PosToLSPPos(getcurpos())}))
 endfunction
 
-function! simple_lsp#RequestCompletion()
-    return simple_lsp#SendBufferRequest(s:CreateLspRequest("textDocument/completion", {"context": {"triggerKind": 1}, "textDocument": {"uri": s:PathToUri(expand('%:p'))}, "position": s:PosToLSPPos(getcurpos())}))
+function! simple_lsp#RequestCompletion(findstart, base)
+    if a:findstart
+        call s:CheckForChanges(1)
+        call s:LogMsg("Requested completions")
+        return -4
+    endif
+    call s:LogMsg("Requested completions not findstart".a:base)
+    call simple_lsp#SendBufferRequest(s:CreateLspRequest("textDocument/completion", {"context": {"triggerKind": 1}, "textDocument": {"uri": s:PathToUri(expand('%:p'))}, "position": s:PosToLSPPos(getcurpos())}))
+    return v:none
 endfunction
 
 function! simple_lsp#GetDiagnostics()
